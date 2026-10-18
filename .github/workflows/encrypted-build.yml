@@ -30,7 +30,6 @@ jobs:
       PAYLOAD_TAG: ${{ inputs.payload_tag }}
       EXPECTED_SOURCE_SHA: ${{ inputs.source_sha }}
       EXPECTED_BUILD: ${{ inputs.build_number }}
-      PRIVATE_BUILD_ROOT: ${{ runner.temp }}/verkehrszeuge-private-build
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -38,6 +37,8 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: 24
+      - name: Select disposable private workspace
+        run: echo "PRIVATE_BUILD_ROOT=$RUNNER_TEMP/verkehrszeuge-private-build" >> "$GITHUB_ENV"
       - name: Test encrypted transfer boundary
         run: node --test envelope.test.mjs
       - name: Decrypt the authenticated build request
