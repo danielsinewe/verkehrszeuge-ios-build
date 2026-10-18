@@ -1,0 +1,17 @@
+name: Encrypted iOS build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    if: github.repository_owner == 'danielsinewe' && github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    timeout-minutes: 5
+    steps:
+      - name: Verify hosted Apple toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          sw_vers -productVersion
