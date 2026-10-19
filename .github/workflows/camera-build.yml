@@ -1,0 +1,83 @@
+name: Encrypted camera verification
+run-name: Camera ${{ inputs.source_sha }} · ${{ inputs.payload_tag }}
+on:
+  workflow_dispatch:
+    inputs:
+      payload_tag:
+        description: Authenticated encrypted request tag
+        required: true
+        type: string
+      source_sha:
+        description: Exact published private source SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: encrypted-camera-build
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.repository_owner == 'danielsinewe' && github.actor == 'danielsinewe' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      PAYLOAD_TAG: ${{ inputs.payload_tag }}
+      EXPECTED_SOURCE_SHA: ${{ inputs.source_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+      - run: echo "PRIVATE_BUILD_ROOT=$RUNNER_TEMP/private-camera-build" >> "$GITHUB_ENV"
+      - run: node --test envelope.test.mjs
+      - name: Decrypt authenticated private request
+        id: decrypt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CAMERA_INPUT_KEY: ${{ secrets.CAMERA_INPUT_KEY }}
+        run: |
+          set -euo pipefail
+          [[ "$PAYLOAD_TAG" =~ ^camera-[0-9a-f]{12}-[0-9a-f]{12}$ ]]
+          mkdir -m 700 "$PRIVATE_BUILD_ROOT"
+          gh release download "$PAYLOAD_TAG" --repo "$GITHUB_REPOSITORY" --pattern input.vzenc --dir "$PRIVATE_BUILD_ROOT"
+          node camera-build.mjs decrypt
+          python3 - <<'PY'
+          import os,pathlib,tarfile
+          root=pathlib.Path(os.environ['PRIVATE_BUILD_ROOT'])
+          with tarfile.open(root/'input.tar.gz') as archive:
+              archive.extractall(root, filter='data')
+          PY
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version-file: ${{ env.PRIVATE_BUILD_ROOT }}/source/camera-cloud/tapo/go.mod
+          cache: false
+      - name: Install runtime decoder
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Verify both actual Linux containers
+        id: compile
+        continue-on-error: true
+        run: node camera-build.mjs
+      - name: Encrypt source-free output for its private recipient
+        if: always() && steps.decrypt.outcome == 'success'
+        run: |
+          set -euo pipefail
+          tar -czf "$PRIVATE_BUILD_ROOT/output.tar.gz" -C "$PRIVATE_BUILD_ROOT/output" .
+          node camera-build.mjs encrypt
+      - name: Retain encrypted result only
+        if: always() && steps.decrypt.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$PAYLOAD_TAG" "$PRIVATE_BUILD_ROOT/result.vzenc" "$PRIVATE_BUILD_ROOT/result.sha256" --repo "$GITHUB_REPOSITORY"
+      - name: Verify final result
+        if: always()
+        env:
+          RESULT: ${{ steps.compile.outcome }}
+        run: test "$RESULT" = success
+      - name: Remove disposable plaintext
+        if: always()
+        run: rm -rf "$PRIVATE_BUILD_ROOT"
