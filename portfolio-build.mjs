@@ -27,10 +27,12 @@ if (process.argv[2] === 'decrypt') {
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/TOKEN|PASSWORD|SECRET|AUTH|INPUT_KEY|API_KEY|PRIVATE_KEY/.test(key)));
   Object.assign(env, job.env || {}, { CI: 'true', NEXT_TELEMETRY_DISABLED: '1' });
   if (jobId === 'camera-native') env.PYTHONPATH = path.join(source, 'camera-cloud/audio');
-  const results = []; let phase = 'identity', result;
+  const results = []; let phase = 'identity', result, period;
   try {
     const request = JSON.parse(fs.readFileSync(path.join(root, 'request.json')));
+    period = request.period;
     if (request.sourceSha !== sourceSha || request.repository !== job.repo || request.jobId !== jobId ||
+        !/^(commit|\d{4}-\d{2}-\d{2})$/.test(period || '') ||
         request.workflowHash !== job.workflow_hash || !isDeepStrictEqual(request.steps, job.steps) ||
         hash(fs.readFileSync(path.join(source, job.workflow))) !== job.workflow_hash) throw Error('Request identity mismatch');
     for (const [index, step] of job.steps.entries()) {
@@ -41,10 +43,10 @@ if (process.argv[2] === 'decrypt') {
       if (!passed && !step.continue_on_error) throw Error('Private build phase failed');
       console.log('Private verification ' + phase + ' complete.');
     }
-    result = { status: 'success', repository: job.repo, sourceSha, jobId, workflowHash: job.workflow_hash, results,
+    result = { status: 'success', repository: job.repo, sourceSha, jobId, period, workflowHash: job.workflow_hash, results,
       runId: process.env.GITHUB_RUN_ID, workflowSha: process.env.GITHUB_SHA };
   } catch {
-    result = { status: 'failure', repository: job.repo, sourceSha, jobId, workflowHash: job.workflow_hash, phase, results,
+    result = { status: 'failure', repository: job.repo, sourceSha, jobId, period, workflowHash: job.workflow_hash, phase, results,
       runId: process.env.GITHUB_RUN_ID, workflowSha: process.env.GITHUB_SHA };
     console.error('Private verification failed; diagnostics are encrypted.'); process.exitCode = 1;
   } finally {
