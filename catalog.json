@@ -1,0 +1,201 @@
+{
+  "insights": {
+    "id": "insights",
+    "repo": "danielsinewe/remix-of-lovable-insights",
+    "workflow": ".github/workflows/build.yml",
+    "workflow_hash": "254a5510d1ed389b570a4866350a79a5982b069eaac008f0e71247b1039da687",
+    "steps": [
+      {
+        "argv": [
+          "bun",
+          "install",
+          "--frozen-lockfile"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "typecheck"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "lint"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "build"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "preview:smoke"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "test"
+        ]
+      }
+    ],
+    "env": {
+      "PORT": "18788"
+    }
+  },
+  "insights24": {
+    "id": "insights24",
+    "repo": "danielsinewe/remix-of-lovable-insights-24",
+    "workflow": ".github/workflows/build.yml",
+    "workflow_hash": "254a5510d1ed389b570a4866350a79a5982b069eaac008f0e71247b1039da687",
+    "steps": [
+      {
+        "argv": [
+          "bun",
+          "install",
+          "--frozen-lockfile"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "typecheck"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "lint"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "build"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "preview:smoke"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "test"
+        ]
+      }
+    ],
+    "env": {
+      "PORT": "18787"
+    }
+  },
+  "chartmeister": {
+    "id": "chartmeister",
+    "repo": "danielsinewe/chartmeister-app",
+    "workflow": ".github/workflows/ci.yml",
+    "workflow_hash": "f1566d496927910621c9685c4bacfc15e0f28cda4ec98dcfcfb26857e097c52a",
+    "steps": [
+      {
+        "argv": [
+          "npm",
+          "ci",
+          "--no-audit",
+          "--no-fund"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "sync:lib"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "lint",
+          "--if-present"
+        ],
+        "continue_on_error": true
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "test:journey"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "type-check"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "validate-schema"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "build"
+        ]
+      }
+    ],
+    "node22": true
+  },
+  "camera-native": {
+    "id": "camera-native",
+    "repo": "danielsinewe/verkehrs-zeugen-helfer",
+    "workflow": ".github/workflows/tapo-receiver.yml",
+    "workflow_hash": "8cb901b395042bf931231f80c141d188ac13ac27007c5797242a051154399446",
+    "steps": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "camera-cloud/mipc-video",
+          "-p",
+          "test_*.py"
+        ]
+      },
+      {
+        "argv": [
+          "go",
+          "-C",
+          "camera-cloud/tapo",
+          "test",
+          "-race",
+          "-tags",
+          "integration",
+          "./..."
+        ]
+      }
+    ]
+  }
+}
