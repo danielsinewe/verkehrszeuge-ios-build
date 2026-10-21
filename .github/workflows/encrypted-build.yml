@@ -22,7 +22,7 @@ concurrency:
 jobs:
   archive:
     if: github.repository_owner == 'danielsinewe' && github.actor == 'danielsinewe' && github.ref == 'refs/heads/main'
-    runs-on: macos-26
+    runs-on: macos-26-intel
     timeout-minutes: 25
     permissions:
       contents: write
