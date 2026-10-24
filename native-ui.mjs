@@ -85,7 +85,7 @@ try{
   try{run('adb',['-s','emulator-5554','pull','/sdcard/Android/data/app.verkehrszeuge.qa/files/native-journey/.',join(output,'screens')],'collect screens');}catch{}
  }
  closeSync(fd);
- let log=readFileSync(logPath,'utf8');
+ let log=readFileSync(logPath,'utf8').replace(/Type '[^']*' into[^\n]*(?:SecureTextField|TextField)/g,'Type [redacted] into a native field');
  for(const secret of [request.login.email,request.login.password,request.login.userId])if(secret)log=log.split(secret).join('[disposable test login]');
  writeFileSync(logPath,log,{mode:0o600});
  if(status==='success'&&!existsSync(join(output,'screens/verified.json'))){status='failed';process.exitCode=1;}
