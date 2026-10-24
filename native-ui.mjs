@@ -89,6 +89,6 @@ try{
  for(const secret of [request.login.email,request.login.password,request.login.userId])if(secret)log=log.split(secret).join('[disposable test login]');
  writeFileSync(logPath,log,{mode:0o600});
  if(status==='success'&&!existsSync(join(output,'screens/verified.json'))){status='failed';process.exitCode=1;}
- writeFileSync(join(output,'verification.json'),JSON.stringify({status,phase:failedPhase,...context('native-ui-result'),toolingSha:request.toolingSha,workflowSha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,hardwareCapture:platform==='android'},null,2),{mode:0o600});
+ writeFileSync(join(output,'verification.json'),JSON.stringify({status,phase:failedPhase,...context('native-ui-result'),toolingSha:request.toolingSha,workflowSha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,simulatedDevice:true,nativeCapture:platform==='android',physicalDeviceCapture:false},null,2),{mode:0o600});
  console.log(`Native verification ${status}; only encrypted result files are retained.`);
 }
