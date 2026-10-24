@@ -29,6 +29,7 @@ const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!/TOKEN
 let phase='initialization', simulator, status='failed';
 function run(file,args,label,cwd=root,capture=false){
  phase=label;
+ console.log(`Native verification phase: ${label}`);
  const r=spawnSync(file,args,{cwd,env,encoding:capture?'utf8':undefined,stdio:capture?['ignore','pipe','pipe']:['ignore',fd,fd]});
  if(r.error||r.status!==0)throw new Error('Native verification phase failed.');
  return capture?r.stdout.trim():undefined;
