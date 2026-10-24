@@ -94,11 +94,13 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_7
+          ram-size: 2048M
+          heap-size: 512M
           disk-size: 6G
           sdcard-path-or-size: 128M
           emulator-boot-timeout: 300
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader -noaudio -no-boot-anim -no-snapshot -camera-back emulated
+          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -noaudio -no-boot-anim -no-snapshot -camera-back emulated
           script: node native-ui.mjs android
       - name: Encrypt native screenshots and diagnostic receipts
         if: always() && steps.decrypt.outcome == 'success'
