@@ -34,10 +34,14 @@ function run(file,args,label,cwd=root,capture=false){
  if(r.error||r.status!==0){if(capture&&r.stderr)writeSync(fd,r.stderr);throw new Error('Native verification phase failed.');}
  return capture?r.stdout.trim():undefined;
 }
+function iosDataContainer(bundle,label){
+ try{return run('xcrun',['simctl','get_app_container',simulator,bundle,'data'],label,root,true);}
+ catch{return run('python3',[join(process.cwd(),'ios_container.py'),simulator,bundle],label+' sandbox metadata fallback',root,true);}
+}
 function gatherIos(){
  if(!simulator)return;
  try{
-  const data=run('xcrun',['simctl','get_app_container',simulator,'app.verkehrszeuge.screenshot-tests.xctrunner','data'],'collect screens',root,true);
+  const data=iosDataContainer('app.verkehrszeuge.screenshot-tests.xctrunner','collect screens');
   const directory=join(data,'Documents/StoreScreenshots');
   if(existsSync(directory))cpSync(directory,join(output,'screens'),{recursive:true});
  }catch{}
@@ -58,8 +62,9 @@ try{
   if(request.recordingFixtures){
    const fixtures=join(root,'fixtures/ios-recordings');
    run('xcrun',['simctl','launch',simulator,'app.verkehrszeuge','-AppleLanguages','(de)','-AppleLocale','de_DE'],'initialize disposable app container');
+   run('/bin/sleep',['3'],'wait for disposable container initialization');
+   const data=iosDataContainer('app.verkehrszeuge','locate disposable recording storage');
    run('xcrun',['simctl','terminate',simulator,'app.verkehrszeuge'],'stop initialization before fixture staging');
-   const data=run('xcrun',['simctl','get_app_container',simulator,'app.verkehrszeuge','data'],'locate disposable recording storage',root,true);
    const destination=join(data,'Library/Application Support/evidence-recordings');
    const files=readdirSync(fixtures,{withFileTypes:true});
    if(files.length>8||!request.recordingFixtures.otherOwnerId||request.recordingFixtures.otherOwnerId===request.login.userId)throw new Error('Invalid synthetic recovery fixture selector.');
@@ -80,7 +85,7 @@ try{
   run('xcodebuild',['-project',join(root,'test-project/StoreScreenshots.xcodeproj'),'-scheme','StoreScreenshots','-configuration','Release','-destination',`platform=iOS Simulator,id=${simulator}`,'-derivedDataPath',join(root,'test-derived'),'-parallel-testing-enabled','NO','CODE_SIGNING_ALLOWED=NO','-only-testing:StoreScreenshots/StoreScreenshots/testSignedInVideoJourney','test'],'native UI assertions');
   gatherIos();
   if(request.recordingFixtures){
-   const data=run('xcrun',['simctl','get_app_container',simulator,'app.verkehrszeuge','data'],'audit acknowledged originals',root,true);
+   const data=iosDataContainer('app.verkehrszeuge','audit acknowledged originals');
    const storage=join(data,'Library/Application Support/evidence-recordings');
    const rows=readdirSync(storage).filter(name=>name.endsWith('.json')).map(name=>JSON.parse(readFileSync(join(storage,name),'utf8')));
    if(rows.some(row=>row.ownerId===request.login.userId)||rows.filter(row=>row.ownerId===request.recordingFixtures.otherOwnerId).length!==1)throw new Error('Durable acknowledgement or owner isolation failed.');
@@ -102,7 +107,8 @@ try{
   adb(['shell','am','force-stop','app.verkehrszeuge.qa'],'close app after durable upload');
  }
  status='success';
-}catch{
+}catch(error){
+ writeSync(fd,String(error.stack??error).slice(0,8000)+'\n');
  console.error(`Private native verification stopped in ${phase}; diagnostics remain encrypted.`);
  process.exitCode=1;
 }finally{
