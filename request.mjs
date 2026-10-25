@@ -36,11 +36,7 @@ try {
   const request = { schemaVersion: 1, sourceSha, build, backend };
   writeFileSync(join(root, 'request.json'), JSON.stringify(request), { mode: 0o600 });
   writeFileSync(join(root, 'recipient-public.pem'), recipient, { mode: 0o600 });
-  command('git', ['archive', '--format=tar', '--prefix=source/', '--output', join(root, 'input.tar'), sourceSha], { cwd: repo });
-  chmodSync(join(root, 'input.tar'), 0o600);
-  command('tar', ['-rf', join(root, 'input.tar'), '-C', root, 'request.json', 'recipient-public.pem']);
-  const gzip = openSync(join(root, 'input.tar.gz'), 'wx', 0o600);
-  try { command('gzip', ['-c', join(root, 'input.tar')], { output: gzip }); } finally { closeSync(gzip); }
+  command('python3', [join(import.meta.dirname, 'pack_build.py'), repo, sourceSha, join(root, 'input.tar.gz'), root]);
   const plain = readFileSync(join(root, 'input.tar.gz')), key = randomBytes(32);
   const context = { sourceSha, build, kind: 'ios-build-input' };
   const encrypted = seal(plain, context, { key });
@@ -64,7 +60,7 @@ try {
     { input: JSON.stringify({ payload_tag: tag, source_sha: sourceSha, build_number: build }) });
   receipt.state = 'dispatched'; save();
   key.fill(0); plain.fill(0);
-  unlinkSync(join(root, 'input.tar')); unlinkSync(join(root, 'input.tar.gz'));
+  unlinkSync(join(root, 'input.tar.gz'));
   console.log(JSON.stringify(receipt, null, 2));
 } catch (error) {
   console.error(error.message);
