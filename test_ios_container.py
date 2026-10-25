@@ -25,7 +25,7 @@ class ContainerTests(unittest.TestCase):
     def test_selects_exact_bundle(self):
         self.container('other.app')
         expected = self.container('app.example')
-        self.assertEqual(resolve_container(self.root, self.device, 'app.example'), expected)
+        self.assertEqual(resolve_container(self.root, self.device, 'app.example'), expected.resolve())
 
     def test_rejects_missing(self):
         with self.assertRaises(ValueError):
