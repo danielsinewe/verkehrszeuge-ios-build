@@ -29,8 +29,11 @@ try {
   run('xcodebuild', ['-version'], 'Apple toolchain');
   run('npm', ['ci', '--legacy-peer-deps', '--no-audit', '--no-fund'], 'Dependency installation');
   run('python3', ['-m', 'unittest', 'discover', '-s', 'scripts/ios-release', '-p', 'test_*.py'], 'iPhone release tests');
+  run('swiftc', ['ios/App/App/EvidenceRecordingStore.swift', 'scripts/ios-release/recording-recovery-tests.swift', '-o', join(root, 'recording-recovery-tests')], 'Compile production recovery checks');
+  run(join(root, 'recording-recovery-tests'), [join(root, 'recording-recovery')], 'Real movie recovery checks');
+  copyFileSync(join(root, 'recording-recovery/recording-recovery-verification.json'), join(output, 'recording-recovery-verification.json'));
   run('npm', ['run', 'typecheck'], 'Typecheck');
-  run('npx', ['vitest', 'run', 'tests/ios-capture-permissions.test.ts', 'tests/native-evidence-capture.test.ts', 'tests/capture-back-navigation.test.tsx', 'tests/native-platform.test.ts', 'tests/native-cors.test.ts', 'tests/native-cors.server.test.ts'], 'iPhone routing regressions');
+  run('npx', ['vitest', 'run', 'tests/ios-capture-permissions.test.ts', 'tests/ios-recording-recovery.test.ts', 'tests/native-evidence-capture.test.ts', 'tests/capture-back-navigation.test.tsx', 'tests/native-platform.test.ts', 'tests/native-cors.test.ts', 'tests/native-cors.server.test.ts'], 'iPhone routing regressions');
   run('npm', ['run', 'build:native'], 'Native interface build');
   run('npx', ['cap', 'sync', 'ios'], 'iOS synchronization');
   phase = 'packaged backend verification';

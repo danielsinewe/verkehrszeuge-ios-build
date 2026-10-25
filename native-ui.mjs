@@ -55,10 +55,35 @@ try{
   const app=join(root,'app-derived/Build/Products/Release-iphonesimulator/App.app');
   run('python3',['-c',"import plistlib,sys; p=plistlib.load(open(sys.argv[1],'rb')); assert p['CFBundleIdentifier']=='app.verkehrszeuge' and p['CFBundleVersion']==sys.argv[2]",join(app,'Info.plist'),request.build],'verify compiled identity');
   run('xcrun',['simctl','install',simulator,app],'install simulator app');
+  if(request.recordingFixtures){
+   const fixtures=join(root,'fixtures/ios-recordings');
+   const data=run('xcrun',['simctl','get_app_container',simulator,'app.verkehrszeuge','data'],'locate disposable recording storage',root,true);
+   const destination=join(data,'Library/Application Support/evidence-recordings');
+   const files=readdirSync(fixtures,{withFileTypes:true});
+   if(files.length>8||!request.recordingFixtures.otherOwnerId||request.recordingFixtures.otherOwnerId===request.login.userId)throw new Error('Invalid synthetic recovery fixture selector.');
+   mkdirSync(destination,{recursive:true,mode:0o700});
+   for(const file of files){
+    const relative=`fixtures/ios-recordings/${file.name}`;
+    if(!file.isFile()||!/^[-a-f0-9]{36}\.(mov|json)$/.test(file.name)||!request.files[relative])throw new Error('Only authenticated synthetic recording files are allowed.');
+    if(file.name.endsWith('.json')){
+     const row=JSON.parse(readFileSync(join(fixtures,file.name),'utf8'));
+     if(![request.login.userId,request.recordingFixtures.otherOwnerId].includes(row.ownerId))throw new Error('Fixture owner differs.');
+    }
+    cpSync(join(fixtures,file.name),join(destination,file.name));
+   }
+   env.NATIVE_RECORDING_RECOVERY_FIXTURE='1';
+  }
   run('python3',['tooling/screenshots-project.py','--output',join(root,'test-project')],'prepare isolated UI runner');
   run('xcodegen',['generate','--spec',join(root,'test-project/project.json'),'--project',join(root,'test-project')],'generate UI project');
   run('xcodebuild',['-project',join(root,'test-project/StoreScreenshots.xcodeproj'),'-scheme','StoreScreenshots','-configuration','Release','-destination',`platform=iOS Simulator,id=${simulator}`,'-derivedDataPath',join(root,'test-derived'),'-parallel-testing-enabled','NO','CODE_SIGNING_ALLOWED=NO','-only-testing:StoreScreenshots/StoreScreenshots/testSignedInVideoJourney','test'],'native UI assertions');
   gatherIos();
+  if(request.recordingFixtures){
+   const data=run('xcrun',['simctl','get_app_container',simulator,'app.verkehrszeuge','data'],'audit acknowledged originals',root,true);
+   const storage=join(data,'Library/Application Support/evidence-recordings');
+   const rows=readdirSync(storage).filter(name=>name.endsWith('.json')).map(name=>JSON.parse(readFileSync(join(storage,name),'utf8')));
+   if(rows.some(row=>row.ownerId===request.login.userId)||rows.filter(row=>row.ownerId===request.recordingFixtures.otherOwnerId).length!==1)throw new Error('Durable acknowledgement or owner isolation failed.');
+   writeFileSync(join(output,'recording-fixture-audit.json'),JSON.stringify({ownedOriginalsAfterHandoff:0,otherOwnerOriginalPreserved:true,syntheticMedia:true,physicalCameraTested:false},null,2));
+  }
  }else{
   const serial='emulator-5554',adb=(args,label,capture=false)=>run('adb',['-s',serial,...args],label,root,capture);
   if(adb(['shell','getprop','ro.kernel.qemu'],'verify disposable emulator',true)!=='1')throw new Error('Only a disposable emulator is allowed.');
