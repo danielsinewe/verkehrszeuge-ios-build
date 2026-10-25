@@ -1,5 +1,5 @@
 import {spawnSync} from 'node:child_process';
-import {readFileSync,writeFileSync,mkdirSync,openSync,closeSync,existsSync,cpSync,readdirSync,unlinkSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,openSync,closeSync,existsSync,cpSync,readdirSync,unlinkSync,writeSync} from 'node:fs';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 
@@ -31,7 +31,7 @@ function run(file,args,label,cwd=root,capture=false){
  phase=label;
  console.log(`Native verification phase: ${label}`);
  const r=spawnSync(file,args,{cwd,env,encoding:capture?'utf8':undefined,stdio:capture?['ignore','pipe','pipe']:['ignore',fd,fd]});
- if(r.error||r.status!==0)throw new Error('Native verification phase failed.');
+ if(r.error||r.status!==0){if(capture&&r.stderr)writeSync(fd,r.stderr);throw new Error('Native verification phase failed.');}
  return capture?r.stdout.trim():undefined;
 }
 function gatherIos(){
@@ -57,6 +57,8 @@ try{
   run('xcrun',['simctl','install',simulator,app],'install simulator app');
   if(request.recordingFixtures){
    const fixtures=join(root,'fixtures/ios-recordings');
+   run('xcrun',['simctl','launch',simulator,'app.verkehrszeuge','-AppleLanguages','(de)','-AppleLocale','de_DE'],'initialize disposable app container');
+   run('xcrun',['simctl','terminate',simulator,'app.verkehrszeuge'],'stop initialization before fixture staging');
    const data=run('xcrun',['simctl','get_app_container',simulator,'app.verkehrszeuge','data'],'locate disposable recording storage',root,true);
    const destination=join(data,'Library/Application Support/evidence-recordings');
    const files=readdirSync(fixtures,{withFileTypes:true});
