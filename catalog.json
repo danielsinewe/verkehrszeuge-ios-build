@@ -164,7 +164,82 @@
         ]
       }
     ],
-    "node22": true
+    "node22": true,
+    "workflow_variants": {
+      "620087a7c1bd39269ff1618cb2fec94991f5082a879162f98312168ee9f29438": {
+        "steps": [
+          {
+            "argv": [
+              "npm",
+              "ci",
+              "--no-audit",
+              "--no-fund"
+            ]
+          },
+          {
+            "argv": [
+              "npm",
+              "run",
+              "sync:lib"
+            ]
+          },
+          {
+            "argv": [
+              "npm",
+              "run",
+              "lint",
+              "--if-present"
+            ],
+            "continue_on_error": true
+          },
+          {
+            "argv": [
+              "npm",
+              "run",
+              "test:journey"
+            ]
+          },
+          {
+            "argv": [
+              "npm",
+              "run",
+              "type-check"
+            ]
+          },
+          {
+            "argv": [
+              "npm",
+              "run",
+              "validate-schema"
+            ]
+          },
+          {
+            "argv": [
+              "npm",
+              "run",
+              "build"
+            ]
+          },
+          {
+            "argv": [
+              "npx",
+              "playwright",
+              "install",
+              "--with-deps",
+              "chromium"
+            ]
+          },
+          {
+            "argv": [
+              "npx",
+              "playwright",
+              "test",
+              "--config=playwright.mobile.config.ts"
+            ]
+          }
+        ]
+      }
+    }
   },
   "camera-native": {
     "id": "camera-native",
