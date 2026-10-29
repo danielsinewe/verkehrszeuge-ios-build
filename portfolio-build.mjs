@@ -4,12 +4,13 @@ import { spawnSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
 import { createHash } from 'node:crypto';
 import { seal, open, symmetricKey } from './envelope.mjs';
+import {selectReviewedWorkflow} from './reviewed-workflows.mjs';
 
 process.umask(0o077);
 const root = process.env.PRIVATE_BUILD_ROOT;
 const jobId = process.env.EXPECTED_JOB_ID, sourceSha = process.env.EXPECTED_SOURCE_SHA;
 const catalog = JSON.parse(fs.readFileSync(new URL('./catalog.json', import.meta.url)));
-const job = catalog[jobId];
+let job = catalog[jobId];
 if (!root || !job || !/^danielsinewe\//.test(job.repo) || !/^[0-9a-f]{40}$/.test(sourceSha || '')) throw Error('Invalid private job identity');
 const context = kind => ({ sourceSha, jobId, kind: 'quality-build-' + kind });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -30,6 +31,7 @@ if (process.argv[2] === 'decrypt') {
   const results = []; let phase = 'identity', result, period;
   try {
     const request = JSON.parse(fs.readFileSync(path.join(root, 'request.json')));
+    job=selectReviewedWorkflow(job,request.workflowHash);
     period = request.period;
     if (request.sourceSha !== sourceSha || request.repository !== job.repo || request.jobId !== jobId ||
         !/^(commit|\d{4}-\d{2}-\d{2})$/.test(period || '') ||

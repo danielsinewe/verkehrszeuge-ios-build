@@ -19,3 +19,10 @@ The encrypted transfer primitive has tamper, context and recipient regression
 tests. Official public Apple PKI roots in `trust/` support offline signature
 verification; they do not change network TLS trust.
 Encrypted iOS build harness for Verkehrszeuge; application source and build outputs stay encrypted.
+
+Portfolio quality jobs select commands from the committed catalog by exact
+workflow SHA256. Reviewed versions may append required checks while retaining
+every base command and its warning policy. Unrecognized versions and narrower
+source requests fail before source commands run. The workflow runs these guard
+tests before decrypting any private input. Existing base-version requests retain
+their original scope; new browser checks require their own authenticated result.
