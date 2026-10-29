@@ -197,5 +197,55 @@
         ]
       }
     ]
+  },
+  "slopscore": {
+    "id": "slopscore",
+    "repo": "danielsinewe/SlopScore",
+    "workflow": ".github/workflows/deploy-vercel.yml",
+    "workflow_hash": "8b92c6e8a5499592c26c0ad7ed33294c41b471ca432847b73fdef465500fbe96",
+    "steps": [
+      {
+        "argv": [
+          "npm",
+          "ci",
+          "--no-audit",
+          "--no-fund"
+        ]
+      },
+      {
+        "argv": [
+          "node",
+          "--test",
+          "tests/workspace-handoff.test.js",
+          "tests/database-adapter.test.js",
+          "tests/database-diagnostics.test.js",
+          "tests/database-health.test.js",
+          "tests/share-report-missing.test.js",
+          "tests/deployment-workflow.test.js",
+          "tests/score-event-activation.test.js"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "build-dev"
+        ]
+      },
+      {
+        "argv": [
+          "node",
+          "--test",
+          "tests/extension-delivery.test.js"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "test:score"
+        ]
+      }
+    ]
   }
 }
