@@ -16,13 +16,16 @@ function manifestFiles(value){
  return files;
 }
 export function sourceManifestHash(manifest){return hash(JSON.stringify({kind:'source_manifest',files:manifestFiles(manifest)}));}
-function validateArchivePolicy(job) {
+export function validateArchivePolicy(job) {
  const policy = job.source_archive;
  if (policy === undefined) return;
- if (!policy || typeof policy !== 'object' || Array.isArray(policy) || Object.keys(policy).length !== 2 || Object.keys(policy).some(key => !['exclude_environment_files','verify_filtered_tree'].includes(key)) || policy.exclude_environment_files !== true || policy.verify_filtered_tree !== true) throw Error('Unknown source archive policy');
+ if (!policy || typeof policy !== 'object' || Array.isArray(policy) || Object.keys(policy).some(key => !['exclude_environment_files','verify_filtered_tree','exclude_development_skill_links'].includes(key)) || policy.exclude_environment_files !== true || policy.verify_filtered_tree !== true) throw Error('Unknown source archive policy');
+ const links=policy.exclude_development_skill_links;
+ if(links!==undefined&&(!Array.isArray(links)||links.length<1||links.length>64||new Set(links).size!==links.length||links.some((n,i)=>typeof n!=='string'||!/^\.agents\/skills\/[a-z0-9-]+$/.test(n)||i>0&&links[i-1]>=n)))throw Error('Unknown source archive policy');
 }
 function verifyFilteredArchive(job, root) {
  if (job.source_archive === undefined) return;
+ for(const name of job.source_archive.exclude_development_skill_links||[])try{fs.lstatSync(path.join(root,name));throw Error('Source archive contains excluded development skill link');}catch(error){if(error.code!=='ENOENT')throw error;}
  const pending = [root]; let entries = 0;
  while (pending.length) {
   const directory = pending.pop();

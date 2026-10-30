@@ -73,3 +73,11 @@ test('explicit archive policy rejects unexpected env files before legacy checks 
  assert.throws(()=>verifySourceDefinition(job,root,'unknown'),/Unknown source verification stage/);
  fs.writeFileSync(path.join(root,'ci.yml'),'changed');assert.throws(()=>verifySourceDefinition(job,root),/Workflow changed/);
 });
+
+
+test('explicit skill-link exclusions reject injected paths and malformed exclusions without reading link targets',t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'skill-policy-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));fs.writeFileSync(path.join(root,'ci.yml'),'fixture');
+ const job={workflow:'ci.yml',workflow_hash:digest('fixture'),source_archive:{exclude_environment_files:true,verify_filtered_tree:true,exclude_development_skill_links:['.agents/skills/paperclip']}};
+ assert(verifySourceDefinition(job,root,'filtered_archive'));fs.mkdirSync(path.join(root,'.agents/skills'),{recursive:true});fs.symlinkSync('/unavailable-private-target',path.join(root,'.agents/skills/paperclip'));assert(verifySourceDefinition(job,root,'checkout'));assert.throws(()=>verifySourceDefinition(job,root,'filtered_archive'),/excluded development skill/);
+ for(const links of [[],['../outside'],['app.mjs'],['.agents/skills/paperclip','.agents/skills/paperclip']])assert.throws(()=>verifySourceDefinition({...job,source_archive:{...job.source_archive,exclude_development_skill_links:links}},root),/Unknown source archive/);
+});
