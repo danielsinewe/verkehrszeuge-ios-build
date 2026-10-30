@@ -12,7 +12,7 @@ on:
       job_id:
         required: true
         type: choice
-        options: [insights, insights24, chartmeister, camera-native, slopscore, agent-eta, onecv]
+        options: [insights, insights24, chartmeister, camera-native, slopscore, agent-eta, onecv, salesprompter]
 permissions:
   contents: read
 concurrency:
