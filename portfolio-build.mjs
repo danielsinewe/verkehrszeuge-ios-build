@@ -37,6 +37,7 @@ if (process.argv[2] === 'decrypt') {
         !/^(commit|\d{4}-\d{2}-\d{2})$/.test(period || '') ||
         request.workflowHash !== job.workflow_hash || !isDeepStrictEqual(request.steps, job.steps) ||
         !verifySourceDefinition(job,source)) throw Error('Request identity mismatch');
+    if (jobId === 'trustoutreach') env.E2E_DEPLOY_SHA = sourceSha;
     for (const [index, step] of job.steps.entries()) {
       phase = 'step-' + (index + 1);
       const child = spawnSync(step.argv[0], step.argv.slice(1), { cwd: source, env, stdio: ['ignore', fd, fd], timeout: 20 * 60000 });

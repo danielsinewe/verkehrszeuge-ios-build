@@ -61,3 +61,14 @@ test('paired workspace manifests are supported without allowing an escaping dire
  for(const file of ['package.json','package-lock.json'])fs.copyFileSync(path.join(root,'web',file),path.join(outside,file));
  fs.rmSync(path.join(root,'web'),{recursive:true});fs.symlinkSync(outside,path.join(root,'web'));assert.throws(()=>verifySourceDefinition(job,root),/bounds/);
 });
+
+test('explicit archive policy rejects unexpected env files before legacy checks and preserves the workflow hash guard',t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'archive-policy-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ fs.writeFileSync(path.join(root,'ci.yml'),'fixture');const workflow_hash=createHash('sha256').update('fixture').digest('hex');
+ const job={workflow:'ci.yml',workflow_hash,source_archive:'exclude-env'};assert.equal(verifySourceDefinition(job,root),true);
+ fs.mkdirSync(path.join(root,'nested'));fs.writeFileSync(path.join(root,'nested/.env.secret'),'never-read-secret');assert.throws(()=>verifySourceDefinition(job,root),/environment files/);fs.unlinkSync(path.join(root,'nested/.env.secret'));
+ fs.symlinkSync('/unavailable-private-source',path.join(root,'nested/.env.link'));assert.throws(()=>verifySourceDefinition(job,root),/environment files/);fs.unlinkSync(path.join(root,'nested/.env.link'));
+ fs.mkdirSync(path.join(root,'.env-dir'));assert.throws(()=>verifySourceDefinition(job,root),/environment files/);fs.rmdirSync(path.join(root,'.env-dir'));
+ assert.throws(()=>verifySourceDefinition({...job,source_archive:'unknown'},root),/Unknown source archive/);
+ fs.writeFileSync(path.join(root,'ci.yml'),'changed');assert.throws(()=>verifySourceDefinition(job,root),/Workflow changed/);
+});

@@ -16,7 +16,21 @@ function manifestFiles(value){
  return files;
 }
 export function sourceManifestHash(manifest){return hash(JSON.stringify({kind:'source_manifest',files:manifestFiles(manifest)}));}
+function verifyArchivePolicy(job, root) {
+ if (job.source_archive === undefined) return;
+ if (job.source_archive !== 'exclude-env') throw Error('Unknown source archive policy');
+ const pending = [root]; let entries = 0;
+ while (pending.length) {
+  const directory = pending.pop();
+  for (const entry of fs.readdirSync(directory, {withFileTypes:true})) {
+  if (++entries > 20000) throw Error('Source archive inventory exceeds reviewed bounds');
+  if (entry.name.startsWith('.env')) throw Error('Source archive contains environment files');
+  if (entry.isDirectory()) pending.push(path.join(directory, entry.name));
+  }
+ }
+}
 export function verifySourceDefinition(job,root){
+ verifyArchivePolicy(job,root);
  if(!Object.hasOwn(job,'source_manifest')){
   if(hash(fs.readFileSync(path.join(root,job.workflow)))!==job.workflow_hash)throw Error('Workflow changed: no reviewed workflow version');
   return true;
