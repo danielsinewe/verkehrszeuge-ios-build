@@ -569,5 +569,67 @@
       "E2E_REUSE_SERVER": "true",
       "E2E_WAIT_FOR_DEPLOY": "true"
     }
+  },
+  "noctra": {
+    "id": "noctra",
+    "repo": "danielsinewe/audio-pixie-pad",
+    "repository_id": 1421793179,
+    "source_manifest": {
+      "files": [
+        {
+          "path": "package.json",
+          "sha256": "4918324ea9227fbb26a43d4ca53bddf6ed67ff2725a093fbd0c65829327d8bde"
+        },
+        {
+          "path": "bun.lock",
+          "sha256": "a13f79cbf37ae50bf0ead64d176613eba70d833627640d38558fc96ea68ae2e5"
+        }
+      ]
+    },
+    "node_version": 24,
+    "source_visibility": "private",
+    "source_archive": {
+      "exclude_environment_files": true,
+      "verify_filtered_tree": true
+    },
+    "workflow_hash": "336f3751ccaf3d7672e2a459140ccc22e0b5f242b032b4070b37688aff4de0fd",
+    "steps": [
+      {
+        "argv": [
+          "bun",
+          "install",
+          "--frozen-lockfile"
+        ]
+      },
+      {
+        "argv": [
+          "node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "build"
+        ]
+      },
+      {
+        "argv": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const base='https://audio-pixie-pad.lovable.app'; const read=async path=>{const r=await fetch(base+path,{redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('Public entry HTTP '+r.status);return r.text();}; const home=await read('/'); if(!home.includes('NOCTRA')||!home.includes('id=\"pricing\"')||!home.includes('href=\"#pricing\"')||!home.includes('This website does not provide an App Store download link.'))throw Error('Website download disclosure changed'); const robots=await read('/robots.txt');if(!robots.includes(base+'/sitemap.xml'))throw Error('Canonical sitemap missing');const sitemap=await read('/sitemap.xml');if(!sitemap.includes(base))throw Error('Canonical sitemap changed');const llms=await read('/llms.txt');if(!llms.includes('NOCTRA'))throw Error('Public product description missing');console.log('Anonymous website entry and download disclosure checks passed; native binary availability unverified.');"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "lint"
+        ]
+      }
+    ]
   }
 }
