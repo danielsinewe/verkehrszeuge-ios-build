@@ -631,5 +631,74 @@
         ]
       }
     ]
+  },
+  "dr-studio": {
+    "id": "dr-studio",
+    "repo": "danielsinewe/domainrating",
+    "repository_id": 1266260385,
+    "source_manifest": {
+      "files": [
+        {
+          "path": "package.json",
+          "sha256": "2f2c61602a929c794443c1277be8c562a71c78c4956987c3689c0018261d3c59"
+        },
+        {
+          "path": "bun.lock",
+          "sha256": "88d2cbcb022fb32187796513cfdb45958cb1082ef5d93fba1e517e76bb87023d"
+        }
+      ]
+    },
+    "node_version": 24,
+    "source_visibility": "private",
+    "source_archive": {
+      "exclude_environment_files": true,
+      "verify_filtered_tree": true
+    },
+    "workflow_hash": "eb6f9a22cb4103c6c0f3e35c3bf1cbef69b9e3d0615491972efb69d838639640",
+    "steps": [
+      {
+        "argv": [
+          "bun",
+          "install",
+          "--frozen-lockfile"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "test"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "typecheck"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "build"
+        ]
+      },
+      {
+        "argv": [
+          "bun",
+          "run",
+          "lint"
+        ]
+      },
+      {
+        "argv": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const base='https://drstud.io';const read=async path=>{const r=await fetch(base+path,{redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('Guide HTTP '+r.status);return r.text();};for(const path of ['/domain-authority-checker','/spam-score-checker']){const h=await read(path);if(!h.includes(base+path)||!h.includes('og:image')||!h.includes(base+'/assets/drstudio-og-guides.png')||!h.includes('<form'))throw Error('Guide metadata or lookup entry changed');}const r=await fetch(base+'/assets/drstudio-og-guides.png',{redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok||!r.headers.get('content-type')?.includes('image/png'))throw Error('Guide image unavailable');const b=new Uint8Array(await r.arrayBuffer());if(b.length<24||b[0]!==137||b[1]!==80||b[2]!==78||b[3]!==71)throw Error('Invalid guide PNG');const d=new DataView(b.buffer);if(d.getUint32(16)!==1200||d.getUint32(20)!==630)throw Error('Guide dimensions changed');console.log('Public guide metadata, lookup entry and PNG checks passed; no lookup, login, paid provider or database action performed.');"
+        ]
+      }
+    ]
   }
 }
