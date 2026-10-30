@@ -16,21 +16,27 @@ function manifestFiles(value){
  return files;
 }
 export function sourceManifestHash(manifest){return hash(JSON.stringify({kind:'source_manifest',files:manifestFiles(manifest)}));}
-function verifyArchivePolicy(job, root) {
+function validateArchivePolicy(job) {
+ const policy = job.source_archive;
+ if (policy === undefined) return;
+ if (!policy || typeof policy !== 'object' || Array.isArray(policy) || Object.keys(policy).length !== 2 || Object.keys(policy).some(key => !['exclude_environment_files','verify_filtered_tree'].includes(key)) || policy.exclude_environment_files !== true || policy.verify_filtered_tree !== true) throw Error('Unknown source archive policy');
+}
+function verifyFilteredArchive(job, root) {
  if (job.source_archive === undefined) return;
- if (job.source_archive !== 'exclude-env') throw Error('Unknown source archive policy');
  const pending = [root]; let entries = 0;
  while (pending.length) {
   const directory = pending.pop();
   for (const entry of fs.readdirSync(directory, {withFileTypes:true})) {
-  if (++entries > 20000) throw Error('Source archive inventory exceeds reviewed bounds');
-  if (entry.name.startsWith('.env')) throw Error('Source archive contains environment files');
-  if (entry.isDirectory()) pending.push(path.join(directory, entry.name));
+   if (++entries > 20000) throw Error('Source archive inventory exceeds reviewed bounds');
+   if (entry.name.startsWith('.env')) throw Error('Source archive contains environment files');
+   if (entry.isDirectory()) pending.push(path.join(directory, entry.name));
   }
  }
 }
-export function verifySourceDefinition(job,root){
- verifyArchivePolicy(job,root);
+export function verifySourceDefinition(job,root,sourceStage='checkout'){
+ if (!['checkout','filtered_archive'].includes(sourceStage)) throw Error('Unknown source verification stage');
+ validateArchivePolicy(job);
+ if (sourceStage === 'filtered_archive') verifyFilteredArchive(job,root);
  if(!Object.hasOwn(job,'source_manifest')){
   if(hash(fs.readFileSync(path.join(root,job.workflow)))!==job.workflow_hash)throw Error('Workflow changed: no reviewed workflow version');
   return true;
