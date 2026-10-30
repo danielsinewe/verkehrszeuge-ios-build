@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
 import { createHash } from 'node:crypto';
 import { seal, open, symmetricKey } from './envelope.mjs';
-import {selectReviewedWorkflow} from './reviewed-workflows.mjs';
+import {selectReviewedWorkflow,verifySourceDefinition} from './reviewed-workflows.mjs';
 
 process.umask(0o077);
 const root = process.env.PRIVATE_BUILD_ROOT;
@@ -36,7 +36,7 @@ if (process.argv[2] === 'decrypt') {
     if (request.sourceSha !== sourceSha || request.repository !== job.repo || request.jobId !== jobId ||
         !/^(commit|\d{4}-\d{2}-\d{2})$/.test(period || '') ||
         request.workflowHash !== job.workflow_hash || !isDeepStrictEqual(request.steps, job.steps) ||
-        hash(fs.readFileSync(path.join(source, job.workflow))) !== job.workflow_hash) throw Error('Request identity mismatch');
+        !verifySourceDefinition(job,source)) throw Error('Request identity mismatch');
     for (const [index, step] of job.steps.entries()) {
       phase = 'step-' + (index + 1);
       const child = spawnSync(step.argv[0], step.argv.slice(1), { cwd: source, env, stdio: ['ignore', fd, fd], timeout: 20 * 60000 });
