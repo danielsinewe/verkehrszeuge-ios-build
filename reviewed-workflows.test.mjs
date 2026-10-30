@@ -65,10 +65,11 @@ test('paired workspace manifests are supported without allowing an escaping dire
 test('explicit archive policy rejects unexpected env files before legacy checks and preserves the workflow hash guard',t=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'archive-policy-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  fs.writeFileSync(path.join(root,'ci.yml'),'fixture');const workflow_hash=createHash('sha256').update('fixture').digest('hex');
- const job={workflow:'ci.yml',workflow_hash,source_archive:'exclude-env'};assert.equal(verifySourceDefinition(job,root),true);
- fs.mkdirSync(path.join(root,'nested'));fs.writeFileSync(path.join(root,'nested/.env.secret'),'never-read-secret');assert.throws(()=>verifySourceDefinition(job,root),/environment files/);fs.unlinkSync(path.join(root,'nested/.env.secret'));
- fs.symlinkSync('/unavailable-private-source',path.join(root,'nested/.env.link'));assert.throws(()=>verifySourceDefinition(job,root),/environment files/);fs.unlinkSync(path.join(root,'nested/.env.link'));
- fs.mkdirSync(path.join(root,'.env-dir'));assert.throws(()=>verifySourceDefinition(job,root),/environment files/);fs.rmdirSync(path.join(root,'.env-dir'));
- assert.throws(()=>verifySourceDefinition({...job,source_archive:'unknown'},root),/Unknown source archive/);
+ const job={workflow:'ci.yml',workflow_hash,source_archive:{exclude_environment_files:true,verify_filtered_tree:true}};assert.equal(verifySourceDefinition(job,root),true);
+ fs.mkdirSync(path.join(root,'nested'));fs.writeFileSync(path.join(root,'nested/.env.secret'),'never-read-secret');assert.equal(verifySourceDefinition(job,root,'checkout'),true);assert.throws(()=>verifySourceDefinition(job,root,'filtered_archive'),/environment files/);fs.unlinkSync(path.join(root,'nested/.env.secret'));
+ fs.symlinkSync('/unavailable-private-source',path.join(root,'nested/.env.link'));assert.equal(verifySourceDefinition(job,root,'checkout'),true);assert.throws(()=>verifySourceDefinition(job,root,'filtered_archive'),/environment files/);fs.unlinkSync(path.join(root,'nested/.env.link'));
+ fs.mkdirSync(path.join(root,'.env-dir'));assert.equal(verifySourceDefinition(job,root,'checkout'),true);assert.throws(()=>verifySourceDefinition(job,root,'filtered_archive'),/environment files/);fs.rmdirSync(path.join(root,'.env-dir'));
+ for(const policy of ['unknown','exclude-env',{}, {exclude_environment_files:true}, {exclude_environment_files:true,verify_filtered_tree:false}, {exclude_environment_files:true,verify_filtered_tree:true,unknown:true}])assert.throws(()=>verifySourceDefinition({...job,source_archive:policy},root),/Unknown source archive/);
+ assert.throws(()=>verifySourceDefinition(job,root,'unknown'),/Unknown source verification stage/);
  fs.writeFileSync(path.join(root,'ci.yml'),'changed');assert.throws(()=>verifySourceDefinition(job,root),/Workflow changed/);
 });
