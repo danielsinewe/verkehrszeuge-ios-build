@@ -481,5 +481,84 @@
         ]
       }
     ]
+  },
+  "trustoutreach": {
+    "id": "trustoutreach",
+    "repo": "danielsinewe/trustoutreach",
+    "repository_id": 1088204913,
+    "source_visibility": "private",
+    "source_archive": "exclude-env",
+    "workflow": ".github/workflows/e2e.yml",
+    "workflow_hash": "5bd764258d1a40ef6a703256efc6acd7193c39ad196c983f37aa3923d609e654",
+    "steps": [
+      {
+        "argv": [
+          "npm",
+          "ci",
+          "--no-audit",
+          "--no-fund"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "lint"
+        ],
+        "continue_on_error": true
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "type-check"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "test",
+          "--",
+          "--runInBand"
+        ]
+      },
+      {
+        "argv": [
+          "timeout",
+          "300",
+          "bash",
+          "-euo",
+          "pipefail",
+          "-c",
+          "root_page=\"$(mktemp)\"\ncampaign_page=\"$(mktemp)\"\ncampaigns_api=\"$(mktemp)\"\n\ncurl --fail --silent --show-error --location --retry 3 \\\n  https://trustoutreach.com/ --output \"$root_page\"\ncurl --fail --silent --show-error --location --retry 3 \\\n  https://trustoutreach.com/campaigns/106643674 --output \"$campaign_page\"\ncurl --fail --silent --show-error --location --retry 3 \\\n  https://trustoutreach.com/api/public/campaigns --output \"$campaigns_api\"\n\ngrep --quiet 'TrustOutreach' \"$root_page\"\ngrep --quiet 'campaign' \"$campaign_page\"\njq --exit-status '.campaigns | type == \"array\" and length >= 100' \"$campaigns_api\"\n! grep --quiet 'No email experts found' \"$root_page\"\n! grep --quiet 'No experts found' \"$root_page\""
+        ]
+      },
+      {
+        "argv": [
+          "npx",
+          "--no-install",
+          "playwright",
+          "install",
+          "--with-deps",
+          "chromium"
+        ]
+      },
+      {
+        "argv": [
+          "npx",
+          "--no-install",
+          "playwright",
+          "test",
+          "tests/e2e/smoke.spec.ts",
+          "--grep",
+          "email-channel leaderboard|public campaigns API returns list"
+        ]
+      }
+    ],
+    "env": {
+      "E2E_BASE_URL": "https://trustoutreach.com",
+      "E2E_REUSE_SERVER": "true",
+      "E2E_WAIT_FOR_DEPLOY": "true"
+    }
   }
 }
