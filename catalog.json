@@ -322,5 +322,118 @@
         ]
       }
     ]
+  },
+  "agent-eta": {
+    "id": "agent-eta",
+    "repo": "danielsinewe/AgentEstimate",
+    "repository_id": 1349634523,
+    "source_manifest": {
+      "files": [
+        {
+          "path": "package.json",
+          "sha256": "d390d80c9471dd4d6c408a3bb6313d054c6353bbf0dfa577362216b951f15df1"
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "da451f852a39689d3db41a4904eceaceaa92d42063a0f171e089871cfcc8fa74"
+        },
+        {
+          "path": "apps/web/package.json",
+          "sha256": "db5766c9ef3284d069f5fefadb425efbf8b43881d017ddeea8574d69d36e702a"
+        },
+        {
+          "path": "packages/core/package.json",
+          "sha256": "5d7a7e20efee255a776a945298df7473ef66e7e38b36d814cba3b9ec6d742ef3"
+        },
+        {
+          "path": "packages/integration/package.json",
+          "sha256": "0b489a7dd6f08fb5df79552f10de5efa2c2204f0039394eb8711f9fcee59baa0"
+        }
+      ]
+    },
+    "node_version": 24,
+    "source_visibility": "public",
+    "result_repository": {
+      "repo": "danielsinewe/1footer",
+      "id": 1099707711
+    },
+    "workflow_hash": "6331538368cafd3f59b29a2a0bb34e114925dd3320a1152a0be04d740fc32e20",
+    "steps": [
+      {
+        "argv": [
+          "npm",
+          "ci",
+          "--no-audit",
+          "--no-fund"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "check"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
+          "plugin:validate"
+        ]
+      }
+    ]
+  },
+  "onecv": {
+    "id": "onecv",
+    "repo": "danielsinewe/onecv",
+    "repository_id": 1299043352,
+    "source_manifest": {
+      "files": [
+        {
+          "path": "web/package.json",
+          "sha256": "ddf1bc1e3bfa8d9b1eb55c2e3eb8f9f8392ef3ff47388182807f4e7d3f69fc52"
+        },
+        {
+          "path": "web/package-lock.json",
+          "sha256": "a7649cb863b23ba36d9b83b67fc9de3862986b4cbf1e28abf4dfd28a76b1a024"
+        }
+      ]
+    },
+    "node_version": 24,
+    "source_visibility": "public",
+    "result_repository": {
+      "repo": "danielsinewe/1footer",
+      "id": 1099707711
+    },
+    "workflow_hash": "0ef6af63e2ae0fdf732000b97873c871a54d8a1381e11ba2495f2e4a40482df7",
+    "steps": [
+      {
+        "argv": [
+          "npm",
+          "--prefix",
+          "web",
+          "ci",
+          "--no-audit",
+          "--no-fund"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "--prefix",
+          "web",
+          "test"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "--prefix",
+          "web",
+          "run",
+          "build"
+        ]
+      }
+    ]
   }
 }
