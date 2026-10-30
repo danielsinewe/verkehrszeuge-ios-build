@@ -371,6 +371,14 @@
         "argv": [
           "npm",
           "run",
+          "build",
+          "--workspace=@agent-eta/core"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "run",
           "check"
         ]
       },
