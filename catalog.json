@@ -489,7 +489,13 @@
     "source_visibility": "private",
     "source_archive": {
       "exclude_environment_files": true,
-      "verify_filtered_tree": true
+      "verify_filtered_tree": true,
+      "exclude_development_skill_links": [
+        ".agents/skills/paperclip",
+        ".agents/skills/paperclip-create-agent",
+        ".agents/skills/paperclip-create-plugin",
+        ".agents/skills/para-memory-files"
+      ]
     },
     "workflow": ".github/workflows/e2e.yml",
     "workflow_hash": "5bd764258d1a40ef6a703256efc6acd7193c39ad196c983f37aa3923d609e654",
