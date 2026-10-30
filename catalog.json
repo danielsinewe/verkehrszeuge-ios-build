@@ -443,5 +443,43 @@
         ]
       }
     ]
+  },
+  "salesprompter": {
+    "id": "salesprompter",
+    "repo": "danielsinewe/salesprompter-app",
+    "repository_id": 963133953,
+    "source_manifest": {
+      "files": [
+        {
+          "path": "package.json",
+          "sha256": "c7d5efc694750b0770ac83234a64c9230cd7b701200fe2de2cd56b6f8d32fae4"
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "7660154ecba092c043f0e787c68c5c266d4f029f587fbc4bc3473f888c2507c7"
+        }
+      ]
+    },
+    "node_version": 24,
+    "source_visibility": "private",
+    "workflow_hash": "e717e70877a709995d0da208d4b45eef756a424b3463013883873e3aa7a23054",
+    "steps": [
+      {
+        "argv": [
+          "npm",
+          "ci",
+          "--no-audit",
+          "--no-fund"
+        ]
+      },
+      {
+        "argv": [
+          "npm",
+          "test",
+          "--",
+          "--maxWorkers=2"
+        ]
+      }
+    ]
   }
 }
