@@ -8,11 +8,12 @@ function manifestFiles(value){
  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>k!=='files')||!Array.isArray(value.files)||value.files.length<2||value.files.length>32)throw Error('Invalid reviewed source manifest');
  const seen=new Set();
  const files=value.files.map(file=>{
-  if(!file||typeof file!=='object'||Array.isArray(file)||Object.keys(file).some(k=>!['path','sha256'].includes(k))||typeof file.path!=='string'||file.path.length>240||!/^(?:[a-zA-Z0-9._-]+\/)*(?:package|package-lock)\.json$/.test(file.path)||file.path.split('/').some(part=>['.','..'].includes(part))||seen.has(file.path)||!/^[a-f0-9]{64}$/.test(file.sha256||''))throw Error('Invalid reviewed source manifest file');
+  if(!file||typeof file!=='object'||Array.isArray(file)||Object.keys(file).some(k=>!['path','sha256'].includes(k))||typeof file.path!=='string'||file.path.length>240||!/^(?:[a-zA-Z0-9._-]+\/)*(?:package(?:-lock)?\.json|bun\.lock)$/.test(file.path)||file.path.split('/').some(part=>['.','..'].includes(part))||seen.has(file.path)||!/^[a-f0-9]{64}$/.test(file.sha256||''))throw Error('Invalid reviewed source manifest file');
   seen.add(file.path);return {path:file.path,sha256:file.sha256};
  }).sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
- const locks=files.filter(file=>file.path.endsWith('package-lock.json'));
- if(!locks.length||locks.some(file=>!seen.has(file.path.replace(/package-lock\.json$/,'package.json'))))throw Error('Reviewed source manifest needs a paired package and lockfile');
+ const locks=files.filter(file=>/(?:^|\/)(?:package-lock\.json|bun\.lock)$/.test(file.path));
+ if(locks.some(file=>file.path.endsWith('bun.lock'))&&locks.some(file=>file.path.endsWith('package-lock.json')))throw Error('Reviewed source manifest must use one lockfile format');
+ if(!locks.length||locks.some(file=>!seen.has(file.path.replace(/(?:package-lock\.json|bun\.lock)$/,'package.json'))))throw Error('Reviewed source manifest needs a paired package and lockfile');
  return files;
 }
 export function sourceManifestHash(manifest){return hash(JSON.stringify({kind:'source_manifest',files:manifestFiles(manifest)}));}

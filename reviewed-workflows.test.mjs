@@ -81,3 +81,13 @@ test('explicit skill-link exclusions reject injected paths and malformed exclusi
  assert(verifySourceDefinition(job,root,'filtered_archive'));fs.mkdirSync(path.join(root,'.agents/skills'),{recursive:true});fs.symlinkSync('/unavailable-private-target',path.join(root,'.agents/skills/paperclip'));assert(verifySourceDefinition(job,root,'checkout'));assert.throws(()=>verifySourceDefinition(job,root,'filtered_archive'),/excluded development skill/);
  for(const links of [[],['../outside'],['app.mjs'],['.agents/skills/paperclip','.agents/skills/paperclip']])assert.throws(()=>verifySourceDefinition({...job,source_archive:{...job.source_archive,exclude_development_skill_links:links}},root),/Unknown source archive/);
 });
+
+test('Bun text lockfiles require an exact paired package and retain canonical hashes and bounded reads',t=>{
+ const {root,job}=manifestFixture(t);fs.renameSync(path.join(root,'package-lock.json'),path.join(root,'bun.lock'));
+ job.source_manifest.files[1].path='bun.lock';job.workflow_hash=sourceManifestHash(job.source_manifest);
+ assert(verifySourceDefinition(job,root));assert.equal(sourceManifestHash({files:[...job.source_manifest.files].reverse()}),job.workflow_hash);assert.deepEqual(selectReviewedWorkflow(job),job);
+ fs.writeFileSync(path.join(root,'bun.lock'),'changed dependency graph');assert.throws(()=>verifySourceDefinition(job,root),/manifest changed/);
+ const files=job.source_manifest.files;
+ for(const manifest of [{files:files.slice(1)},{files:[files[0],{...files[1],path:'web/bun.lock'}]},{files:[...files,{...files[1],path:'package-lock.json'}]},{files:[files[0],{...files[1],path:'bun.lockb'}]},{files:[files[0],{...files[1],path:'../bun.lock'}]}])assert.throws(()=>sourceManifestHash(manifest));
+ fs.unlinkSync(path.join(root,'bun.lock'));fs.symlinkSync('/unavailable-private-lock',path.join(root,'bun.lock'));assert.throws(()=>verifySourceDefinition(job,root),/unavailable|bounds/);
+});
