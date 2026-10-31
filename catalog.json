@@ -640,7 +640,7 @@
       "files": [
         {
           "path": "package.json",
-          "sha256": "2f2c61602a929c794443c1277be8c562a71c78c4956987c3689c0018261d3c59"
+          "sha256": "9aaa9334e1a0edc929ae54c81ac22134b67aa5a671fdd2b62c0ff508b5207a9d"
         },
         {
           "path": "bun.lock",
@@ -654,7 +654,7 @@
       "exclude_environment_files": true,
       "verify_filtered_tree": true
     },
-    "workflow_hash": "eb6f9a22cb4103c6c0f3e35c3bf1cbef69b9e3d0615491972efb69d838639640",
+    "workflow_hash": "5bb6f532bd5fa6f2bdd2fba52aef865bb83eb21ba064c9c81c31dea468406d25",
     "steps": [
       {
         "argv": [
