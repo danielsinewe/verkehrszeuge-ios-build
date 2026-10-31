@@ -331,7 +331,7 @@
       "files": [
         {
           "path": "package.json",
-          "sha256": "d390d80c9471dd4d6c408a3bb6313d054c6353bbf0dfa577362216b951f15df1"
+          "sha256": "1f5b43c45f7fde69c76f06d9d24ac9504ed4092172d29547f592a10c11ec83d4"
         },
         {
           "path": "package-lock.json",
@@ -357,7 +357,7 @@
       "repo": "danielsinewe/1footer",
       "id": 1099707711
     },
-    "workflow_hash": "6331538368cafd3f59b29a2a0bb34e114925dd3320a1152a0be04d740fc32e20",
+    "workflow_hash": "0a04edc7e51e480b1c4404d67e3335b53dcaa5af49cffb8d6ea29304c014a108",
     "steps": [
       {
         "argv": [
