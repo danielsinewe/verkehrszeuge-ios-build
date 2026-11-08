@@ -26,3 +26,9 @@ every base command and its warning policy. Unrecognized versions and narrower
 source requests fail before source commands run. The workflow runs these guard
 tests before decrypting any private input. Existing base-version requests retain
 their original scope; new browser checks require their own authenticated result.
+
+The iPhone workflow prewarms SwiftPM's binary-artifact cache from the official
+Capacitor release API if GitHub's browser asset endpoint is unavailable. It
+requires the exact locked SDK version and matching Package.swift/release SHA-256
+before writing the original URL's SwiftPM cache entry. No framework bytes,
+package version, app source, signing scope or compiler checks are changed.

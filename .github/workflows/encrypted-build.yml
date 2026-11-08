@@ -64,6 +64,11 @@ jobs:
           with tarfile.open(root/'input.tar.gz') as archive:
               archive.extractall(root, filter='data')
           PY
+      - name: Cache verified official Capacitor artifacts
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node cache-capacitor.mjs
       - name: Build and verify the current unsigned iPhone archive
         id: compile
         continue-on-error: true
