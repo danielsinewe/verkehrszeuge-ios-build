@@ -94,8 +94,27 @@ try{
  }else{
   const serial='emulator-5554',adb=(args,label,capture=false)=>run('adb',['-s',serial,...args],label,root,capture);
   if(adb(['shell','getprop','ro.kernel.qemu'],'verify disposable emulator',true)!=='1')throw new Error('Only a disposable emulator is allowed.');
-  adb(['install','-r',join(root,'application.apk')],'install native QA package');
-  adb(['install','-r',join(root,'tests.apk')],'install isolated UI runner');
+  if(request.suite!=='recording-capture'){
+   adb(['install','-r',join(root,'application.apk')],'install native QA package');
+   adb(['install','-r',join(root,'tests.apk')],'install isolated UI runner');
+  }
+  if(request.suite==='recording-capture'){
+   // Opt-in capture proof, separate from the existing signed-in journey. All
+   // supplied files passed the authenticated request manifest above.
+   const capture=join(root,'android/app/build/outputs/apk');
+   mkdirSync(join(capture,'debug'),{recursive:true});mkdirSync(join(capture,'androidTest/debug'),{recursive:true});
+   cpSync(join(root,'application.apk'),join(capture,'debug/app-debug.apk'));
+   cpSync(join(root,'tests.apk'),join(capture,'androidTest/debug/app-debug-androidTest.apk'));
+   cpSync(join(root,'verify_runtime.py'),join(process.env.RUNNER_TEMP,'verify-runtime.py'));
+   let proof=readFileSync(join(root,'visible-start-proof.sh'),'utf8');
+   if(!proof.includes('git rev-parse HEAD > evidence/source-sha.txt'))throw new Error('Unexpected capture tooling contract');
+   // This runner receives immutable APKs, not a private Git checkout. Attribute
+   // their authenticated manifest source explicitly, never the harness HEAD.
+   proof=proof.replace('git rev-parse HEAD > evidence/source-sha.txt',`printf '%s\\n' '${request.sourceSha}' > evidence/source-sha.txt`);
+   writeFileSync(join(root,'capture-proof.sh'),proof,{mode:0o600});
+   env.RECORD_SCREEN='false';env.CAPTURE_SYSTEM_IMAGE='google_apis';env.CAPTURE_CAMERA_SOURCE='emulated';
+   run('bash',[join(root,'capture-proof.sh')],'CameraX recording and strict live capture proof');
+  }else{
   const login=join(root,'qa-login.json');writeFileSync(login,JSON.stringify(request.login),{mode:0o600});
   adb(['push',login,'/data/local/tmp/native-qa-login.json'],'stage disposable account');
   adb(['shell','run-as','app.verkehrszeuge.qa','mkdir','-p','files'],'prepare account input');
@@ -105,6 +124,7 @@ try{
   adb(['shell','am','instrument','-w','-r','-e','class','app.verkehrszeuge.SignedInVideoJourneyTest','app.verkehrszeuge.qa.test/androidx.test.runner.AndroidJUnitRunner'],'native UI assertions');
   if(!/^OK \([0-9]+ tests?\)/m.test(readFileSync(logPath,'utf8')))throw new Error('Native assertions did not pass.');
   adb(['shell','am','force-stop','app.verkehrszeuge.qa'],'close app after durable upload');
+  }
  }
  status='success';
 }catch(error){
@@ -114,14 +134,16 @@ try{
 }finally{
  const failedPhase=phase;
  if(platform==='ios')gatherIos();
- else{
+ else if(request.suite==='recording-capture'){
+  if(existsSync(join(root,'evidence')))cpSync(join(root,'evidence'),join(output,'evidence'),{recursive:true});
+ }else{
   try{run('adb',['-s','emulator-5554','pull','/sdcard/Android/data/app.verkehrszeuge.qa/files/native-journey/.',join(output,'screens')],'collect screens');}catch{}
  }
  closeSync(fd);
  let log=readFileSync(logPath,'utf8').replace(/Type '[^']*' into[^\n]*(?:SecureTextField|TextField)/g,'Type [redacted] into a native field');
  for(const secret of [request.login.email,request.login.password,request.login.userId])if(secret)log=log.split(secret).join('[disposable test login]');
  writeFileSync(logPath,log,{mode:0o600});
- if(status==='success'&&!existsSync(join(output,'screens/verified.json'))){status='failed';process.exitCode=1;}
+ if(status==='success'&&request.suite!=='recording-capture'&&!existsSync(join(output,'screens/verified.json'))){status='failed';process.exitCode=1;}
  writeFileSync(join(output,'verification.json'),JSON.stringify({status,phase:failedPhase,...context('native-ui-result'),toolingSha:request.toolingSha,workflowSha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,simulatedDevice:true,nativeCapture:platform==='android',physicalDeviceCapture:false},null,2),{mode:0o600});
  console.log(`Native verification ${status}; only encrypted result files are retained.`);
 }
