@@ -32,3 +32,16 @@ Capacitor release API if GitHub's browser asset endpoint is unavailable. It
 requires the exact locked SDK version and matching Package.swift/release SHA-256
 before writing the original URL's SwiftPM cache entry. No framework bytes,
 package version, app source, signing scope or compiler checks are changed.
+
+
+Opt-in Android script proofs declare their scope in the authenticated request.
+`proofKind: "synthetic-admission-policy-only"` always produces a synthetic-policy
+phase and `nativeCapture: false, actualCapture: false`; declaring actual capture
+for that kind is rejected. `actualCapture: false` also overrides the capture
+transport default. Unknown script kinds produce unknown/null capture fields,
+even if they claim capture. The existing unqualified recording-capture journey
+and explicit `camerax-recording-capture` keep their existing CameraX phase and
+nativeCapture scope. `actualCapture: null` means this metadata does not establish
+that capture occurred; inspect the script, assertions and detailed measurements.
+A successful synthetic policy proof establishes no sensor, PixelCopy, recording,
+detection-latency or optical result. Older raw receipts are never rewritten.

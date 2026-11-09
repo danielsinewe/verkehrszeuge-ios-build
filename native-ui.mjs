@@ -2,6 +2,7 @@ import {spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync,openSync,closeSync,existsSync,cpSync,readdirSync,unlinkSync,writeSync} from 'node:fs';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
+import {nativeProofScope} from './native-proof-scope.mjs';
 
 const root=process.env.PRIVATE_BUILD_ROOT;
 if(!root)throw new Error('An isolated workspace is required.');
@@ -15,6 +16,7 @@ if(mode==='context-input'||mode==='context-output'){
 }
 const request=JSON.parse(readFileSync(join(root,'request.json'),'utf8'));
 if(request.sourceSha!==process.env.EXPECTED_SOURCE_SHA||request.build!==process.env.EXPECTED_BUILD||request.platform!==platform||!/^[a-f0-9]{40}$/.test(request.toolingSha??''))throw new Error('Authenticated request identity differs.');
+const proofScope=nativeProofScope(request,platform);
 const hash=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
 if(mode==='verify-input'){
  for(const [name,digest] of Object.entries(request.files)){
@@ -113,7 +115,7 @@ try{
    proof=proof.replace('git rev-parse HEAD > evidence/source-sha.txt',`printf '%s\\n' '${request.sourceSha}' > evidence/source-sha.txt`);
    writeFileSync(join(root,'capture-proof.sh'),proof,{mode:0o600});
    env.RECORD_SCREEN='false';env.CAPTURE_SYSTEM_IMAGE='google_apis';env.CAPTURE_CAMERA_SOURCE='emulated';
-   run('bash',[join(root,'capture-proof.sh')],'CameraX recording and strict live capture proof');
+   run('bash',[join(root,'capture-proof.sh')],proofScope.phase);
   }else{
   const login=join(root,'qa-login.json');writeFileSync(login,JSON.stringify(request.login),{mode:0o600});
   adb(['push',login,'/data/local/tmp/native-qa-login.json'],'stage disposable account');
@@ -144,6 +146,6 @@ try{
  for(const secret of [request.login.email,request.login.password,request.login.userId])if(secret)log=log.split(secret).join('[disposable test login]');
  writeFileSync(logPath,log,{mode:0o600});
  if(status==='success'&&request.suite!=='recording-capture'&&!existsSync(join(output,'screens/verified.json'))){status='failed';process.exitCode=1;}
- writeFileSync(join(output,'verification.json'),JSON.stringify({status,phase:failedPhase,...context('native-ui-result'),toolingSha:request.toolingSha,workflowSha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,simulatedDevice:true,nativeCapture:platform==='android',physicalDeviceCapture:false},null,2),{mode:0o600});
+ writeFileSync(join(output,'verification.json'),JSON.stringify({status,...proofScope,phase:failedPhase,...context('native-ui-result'),toolingSha:request.toolingSha,workflowSha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,simulatedDevice:true,physicalDeviceCapture:false},null,2),{mode:0o600});
  console.log(`Native verification ${status}; only encrypted result files are retained.`);
 }

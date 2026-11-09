@@ -43,7 +43,7 @@ jobs:
       - name: Select isolated private workspace
         run: echo "PRIVATE_BUILD_ROOT=$RUNNER_TEMP/private-native-ui" >> "$GITHUB_ENV"
       - name: Verify transfer code
-        run: node --test envelope.test.mjs
+        run: node --test envelope.test.mjs native-proof-scope.test.mjs
       - name: Authenticate and decrypt the requested native packages
         id: decrypt
         env:
